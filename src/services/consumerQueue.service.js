@@ -2,10 +2,10 @@
 
 const { connectToRabbitMQ, closeConnection } = require('../dbs/init.rabbit');
 
-const log = console.log;
-console.log = function () {
-  log.apply(console, [new Date().toISOString()].concat(arguments));
-};
+// const log = console.log;
+// console.log = function () {
+//   log.apply(console, [new Date().toISOString()].concat(arguments));
+// };
 
 class ConsumerService {
   static async consumerQueue(queueName) {
@@ -36,14 +36,42 @@ class ConsumerService {
     try {
       const { channel, connection } = await connectToRabbitMQ();
       const notiQueue = 'notificationQueueProcess';
-      channel.consume(notiQueue, msg => {
-        // Nghiệp vụ logic
-        console.log(
-          `SEND notificationQueue sucessfully processed:`,
-          msg.content.toString()
-        );
-        channel.ack(msg);
-      });
+
+      // 1. TTL
+    //   channel.consume(
+    //     notiQueue,
+    //     msg => {
+    //       // Nghiệp vụ logic
+    //       console.log(
+    //         `SEND notificationQueue sucessfully processed:`,
+    //         msg.content.toString()
+    //       );
+    //       channel.ack(msg);
+    //     }
+    //   );
+
+      // 2. Logic Error
+        channel.consume(notiQueue, msg => {
+          try {
+            const numberTest = Math.random();
+            console.log({ numberTest });
+            if (numberTest < 0.8) {
+              throw new Error('Send notification failed:: HOT FIX');
+            }
+
+            console.log(
+              `SEND notificationQueue sucessfully processed:`,
+              msg.content.toString()
+            );
+            channel.ack(msg);
+          } catch (error) {
+            //   console.error('SEND notification error:', error);
+
+            // false1: Không đẩy mes vào hàng đợi ban đầu, mà đẩy vào hàng đợi DLX
+            // false2: có muốn xóa toàn bộ message khỏi hàng đợi hiện tại hay không
+            channel.nack(msg, false, false);
+          }
+        });
     } catch (error) {
       console.error(error);
     }
