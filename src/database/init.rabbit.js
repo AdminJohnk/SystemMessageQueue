@@ -5,9 +5,7 @@ const { RABBITMQ_HOST, RABBITMQ_PORT } = process.env;
 
 const connectToRabbitMQ = async () => {
   try {
-    const connection = await amqp.connect(
-      `amqp://${RABBITMQ_HOST}:${RABBITMQ_PORT}`
-    );
+    const connection = await amqp.connect(RABBITMQ_HOST);
     if (!connection) throw new Error('Connection not established');
 
     const channel = await connection.createChannel();
