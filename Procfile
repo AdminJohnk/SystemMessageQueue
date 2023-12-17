@@ -1,2 +1,1 @@
-web: npm start
-restart: npm start
+web: pm2 start server.js
