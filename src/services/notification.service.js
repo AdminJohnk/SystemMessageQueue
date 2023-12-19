@@ -1,5 +1,5 @@
 const { NotiClass } = require('../models/notification.model');
-const { FollowClass } = require('../models/follow.model');
+const { FriendClass } = require('../models/friend.model');
 const { Notification } = require('../utils/notificationType');
 const { connectToRabbitMQ } = require('../database/init.rabbit');
 const { CREATEPOST_001 } = Notification;
@@ -53,7 +53,7 @@ class NotificationService {
         //   channel.sendToQueue(queueName, Buffer.from(JSON.stringify(message)), {
         //     persistent: true,
         //     expiration: '600000',
-            
+
         //   });
         // });
 
@@ -65,20 +65,20 @@ class NotificationService {
 
         const { channel, connection } = await connectToRabbitMQ();
 
-        const followers = await FollowClass.getListFollowersByUserId({
-          user: message.sender
+        const friends = await FriendClass.getAllFriends({
+          user_id: message.sender
         });
-        if (!followers) return null;
+        if (!friends) return null;
 
         // Tạo mảng message thông báo tới các followers
-        const messages = followers.map(follower => ({
+        const messages = friends.map((friend) => ({
           ...message,
           kind: 'one_to_one',
-          receiver: follower._id,
-          id_incr: follower.id_incr
+          receiver: friend._id,
+          id_incr: friend.id_incr
         }));
 
-        messages.forEach(async message => {
+        messages.forEach(async (message) => {
           // 1. create QueueName
           const queueNumber = Math.ceil(message.id_incr / 1000);
           let queueName = `notificationQueue${queueNumber}`;

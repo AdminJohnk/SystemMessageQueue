@@ -108,5 +108,5 @@ class UserClass {
 //Export the model
 module.exports = {
   UserClass,
-  UserSchema
+  UserModel
 };
